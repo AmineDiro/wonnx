@@ -1,12 +1,15 @@
 use std::{collections::HashMap, convert::TryInto};
-use wonnx::utils::{attribute, graph, initializer, initializer_int64, model, node, tensor};
+use wonnx::utils::{
+    attribute, graph, initializer, initializer_int64, model, node, tensor, OutputTensor,
+};
 mod common;
 use ndarray_rand::rand_distr::Uniform;
 use ndarray_rand::RandomExt;
 
 #[test]
 fn test_matmul_square_random_matrix() {
-    let n = 10;
+    let tol = 1e-3f32;
+    let n = 32;
     let _ = env_logger::builder().is_test(true).try_init();
     // Generate random arrays
     let x_data = ndarray::Array2::<f32>::random((n, n), Uniform::new(0f32, 100f32));
@@ -32,7 +35,17 @@ fn test_matmul_square_random_matrix() {
         pollster::block_on(wonnx::Session::from_model(model)).expect("Session did not create");
     let result = pollster::block_on(session.run(&input_data)).unwrap();
 
-    common::assert_eq_vector((&result["Z"]).try_into().unwrap(), &expected);
+    match result.get("Z").unwrap() {
+        OutputTensor::F32(v) => {
+            let diff: Vec<f32> = v.iter().zip(expected.iter()).map(|(l, r)| l - r).collect();
+            let diff = diff
+                .iter()
+                .filter(|e| f32::abs(**e) > tol)
+                .collect::<Vec<_>>();
+            assert_eq!(diff.len(), 0);
+        }
+        _ => unreachable!(),
+    }
 }
 #[test]
 fn test_matmul_square_matrix() {
