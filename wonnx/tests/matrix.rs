@@ -1,7 +1,39 @@
 use std::{collections::HashMap, convert::TryInto};
 use wonnx::utils::{attribute, graph, initializer, initializer_int64, model, node, tensor};
 mod common;
+use ndarray_rand::rand_distr::Uniform;
+use ndarray_rand::RandomExt;
 
+#[test]
+fn test_matmul_square_random_matrix() {
+    let n = 10;
+    let _ = env_logger::builder().is_test(true).try_init();
+    // Generate random arrays
+    let x_data = ndarray::Array2::<f32>::random((n, n), Uniform::new(0f32, 100f32));
+    let y_data = ndarray::Array2::<f32>::random((n, n), Uniform::new(0f32, 10f32));
+    let expected = x_data.dot(&y_data).as_slice().unwrap().to_owned();
+
+    let mut input_data = HashMap::new();
+    input_data.insert("X".to_string(), x_data.as_slice().unwrap().into());
+    input_data.insert("Y".to_string(), y_data.as_slice().unwrap().into());
+
+    let n = n as i64;
+
+    let shape = [1, n, n];
+    let model = model(graph(
+        vec![tensor("X", &shape), tensor("Y", &shape)],
+        vec![tensor("Z", &shape)],
+        vec![],
+        vec![],
+        vec![node(vec!["X", "Y"], vec!["Z"], "matmul", "MatMul", vec![])],
+    ));
+
+    let session =
+        pollster::block_on(wonnx::Session::from_model(model)).expect("Session did not create");
+    let result = pollster::block_on(session.run(&input_data)).unwrap();
+
+    common::assert_eq_vector((&result["Z"]).try_into().unwrap(), &expected);
+}
 #[test]
 fn test_matmul_square_matrix() {
     let _ = env_logger::builder().is_test(true).try_init();
