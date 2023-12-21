@@ -998,17 +998,27 @@ pub fn compile(
                 // - If either argument is N-D, N > 2, it is treated as a stack of matrices residing in the last two indexes
                 //   and broadcast accordingly.
                 if input_left_shape.rank() > 2 || input_right_shape.rank() > 2 {
-                    if input_left_shape.rank() != input_right_shape.rank()
-                        || output_shape.rank() != input_left_shape.rank()
-                        || input_left_shape.dims[0..(input_left_shape.dims.len() - 2)]
-                            != input_right_shape.dims[0..(input_right_shape.dims.len() - 2)]
-                        || input_left_shape.dims[0..(input_left_shape.dims.len() - 2)]
-                            != output_shape.dims[0..(output_shape.dims.len() - 2)]
-                    {
-                        return Err(CompileError::UnimplementedVariant {
-                            variant: format!("broadcasting for two stacks of matrixes (left side has shape {}, right side has shape {})", input_left_shape, input_right_shape),
-                            op: op.to_string(),
-                        });
+                    // if input_left_shape.rank() != input_right_shape.rank()
+                    //     || output_shape.rank() != input_left_shape.rank()
+                    //     || input_left_shape.dims[0..(input_left_shape.dims.len() - 2)]
+                    //         != input_right_shape.dims[0..(input_right_shape.dims.len() - 2)]
+                    //     || input_left_shape.dims[0..(input_left_shape.dims.len() - 2)]
+                    //         != output_shape.dims[0..(output_shape.dims.len() - 2)]
+                    // {
+                    //     return Err(CompileError::UnimplementedVariant {
+                    //         variant: format!("broadcasting for two stacks of matrixes (left side has shape {}, right side has shape {})", input_left_shape, input_right_shape),
+                    //         op: op.to_string(),
+                    //     });
+                    // }
+
+                    // TODO : add a dimension for broadcasting matmul, if first dim isn't 1
+
+                    if input_right_shape.dim(0) != 1 {
+                        let dims: Vec<i64> = vec![1]
+                            .into_iter()
+                            .chain(input_right_shape.dims.iter().map(|e| *e as i64))
+                            .collect::<Vec<_>>();
+                        input_right_shape = Shape::from(ScalarType::F32, &dims);
                     }
 
                     let stack_dims = input_left_shape.dims.len() - 2;
@@ -1435,6 +1445,8 @@ pub fn compile(
     let shader = get_templates()
         .render(node_template.template, &context)
         .expect("failed to render shader");
+
+    log::debug!("Shader for {} : \n{}", node.get_op_type(), &shader);
 
     Ok(CompiledNode {
         shader,

@@ -9,7 +9,7 @@ use ndarray_rand::RandomExt;
 #[test]
 fn test_matmul_square_random_matrix() {
     let tol = 1e-3f32;
-    let n = 32;
+    let n = 321;
     let _ = env_logger::builder().is_test(true).try_init();
     // Generate random arrays
     let x_data = ndarray::Array2::<f32>::random((n, n), Uniform::new(0f32, 100f32));
