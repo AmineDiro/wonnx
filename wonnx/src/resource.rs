@@ -9,9 +9,14 @@ pub async fn request_device_queue() -> (wgpu::Device, wgpu::Queue) {
         ..Default::default()
     };
     let instance = wgpu::Instance::new(instance_descriptor);
-    let adapter = wgpu::util::initialize_adapter_from_env_or_default(&instance, None)
+    let adapter = wgpu::util::initialize_adapter_from_env_or_default(&instance, backends, None)
         .await
         .expect("No GPU found given preference");
+
+    // TODO : compatibility with wgpu:0.18
+    // let adapter = wgpu::util::initialize_adapter_from_env_or_default(&instance, None)
+    //     .await
+    //     .expect("No GPU found given preference");
 
     // `request_device` instantiates the feature specific connection to the GPU, defining some parameters,
     //  `features` being the available features.

@@ -22,7 +22,9 @@ exclude = [
 ]
 
 [dependencies]
-wgpu = "0.18.0"
+# TODO : this is temporary
+#wgpu = "0.18.0"
+wgpu = "0.16.0"
 bytemuck = { version = "1.9.1", features = ["extern_crate_alloc"] }
 protobuf = { version = "2.27.1", features = ["with-bytes"] }
 log = "0.4.17"
@@ -31,7 +33,7 @@ thiserror = "1.0.31"
 serde_derive = "1.0.137"
 serde = { version = "1.0.137", features = ["derive"] }
 num = "0.4.0"
-async-recursion = "^1"
+async-recursion = "=1.0.4"
 
 # We need these on WASM because the way we are reading buffers there is slightly more involved
 # See GpuTensor::read_to_vec

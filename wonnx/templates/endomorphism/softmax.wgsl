@@ -24,7 +24,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
 	// First, determine max(input)
 	// WGSL doesn't have a way to write -Infinity (https://github.com/gpuweb/gpuweb/issues/1769)
 	// Therefore we use log(0) instead which returns -Infinity
-	var max_element: Scalar = log(Scalar());
+	var max_element: Scalar = log(0.00001);
 	for(var k: u32 = 0u; k < n_elements; k = k + 1u) {
 		let element = input_0.data[chunk_start + (k * element_stride)];
 		max_element = max(max_element, element);
